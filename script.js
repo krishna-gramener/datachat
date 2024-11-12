@@ -359,8 +359,7 @@ ${DB.schema()
 3. Write SQL to answer the question. Use SQLite sytax.
 
 Replace generic filter values (e.g. "a location", "specific region", etc.) by querying a random value from data.
-Wrap columns with spaces inside [].
-Limit answers to 100 rows unless asked not to.`,
+Wrap columns with spaces inside [].`,
     user: query,
   });
   render(html`${unsafeHTML(marked.parse(result))}`, $sql);
@@ -372,7 +371,7 @@ Limit answers to 100 rows unless asked not to.`,
   // Render the data using the utility function
   if (data.length > 0) {
     latestQueryResult=data;
-    const tableHtml = renderTable(data);
+    const tableHtml = renderTable(data.slice(0,100));
     render(tableHtml, $result);
     $tablesContainer.querySelector("#download-button").classList.remove("d-none");
   } else {
