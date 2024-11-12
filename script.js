@@ -374,7 +374,7 @@ Limit answers to 100 rows unless asked not to.`,
     latestQueryResult=data;
     const tableHtml = renderTable(data);
     render(tableHtml, $result);
-    $tablesContainer.getElementById("download-button").classList.remove("d-none");
+    $tablesContainer.querySelector("#download-button").classList.remove("d-none");
   } else {
     render(html`<p>No results found.</p>`, $result);
   }
@@ -440,7 +440,7 @@ function renderTable(data) {
 
 $tablesContainer.addEventListener("click", (e) => {
   if (e.target.id === "download-button" && latestQueryResult.length > 0) {
-    downloadCSV(generateCSV(latestQueryResult), "result.csv");
+    downloadCSV(generateCSV(latestQueryResult), "query_result.csv");
   }
 });
 
