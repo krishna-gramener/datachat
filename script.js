@@ -23,6 +23,7 @@ const loading = html`<div class="spinner-border" role="status">
   <span class="visually-hidden">Loading...</span>
 </div>`;
 
+let latestQueryResult=[]
 // --------------------------------------------------------------------
 // Set up Markdown
 const marked = new Marked(
@@ -299,6 +300,7 @@ async function drawTables() {
         <textarea class="form-control" name="query" id="query" rows="3"></textarea>
       </div>
       <button type="submit" class="btn btn-primary">Submit</button>
+      <button id="download-button" type="button" class="btn btn-primary d-none">Download</button>
     </form>
   `;
 
@@ -369,8 +371,10 @@ Limit answers to 100 rows unless asked not to.`,
 
   // Render the data using the utility function
   if (data.length > 0) {
+    latestQueryResult=data;
     const tableHtml = renderTable(data);
     render(tableHtml, $result);
+    $tablesContainer.getElementById("download-button").classList.remove("d-none");
   } else {
     render(html`<p>No results found.</p>`, $result);
   }
@@ -432,4 +436,28 @@ function renderTable(data) {
       </tbody>
     </table>
   `;
+}
+
+$tablesContainer.addEventListener("click", (e) => {
+  if (e.target.id === "download-button" && latestQueryResult.length > 0) {
+    downloadCSV(generateCSV(latestQueryResult), "result.csv");
+  }
+});
+
+// --------------------------------------------------------------------
+function generateCSV(result) {
+  const headers = Object.keys(result[0] || {}).join(",") + "\n";
+  const rows = result.map((row) => Object.values(row).join(",")).join("\n");
+  return headers + rows;
+}
+
+// Function to download CSV file
+function downloadCSV(content, filename) {
+  const blob = new Blob([content], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
