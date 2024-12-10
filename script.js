@@ -23,7 +23,8 @@ const loading = html`<div class="spinner-border" role="status">
   <span class="visually-hidden">Loading...</span>
 </div>`;
 
-let latestQueryResult=[]
+let latestQueryResult = [];
+
 // --------------------------------------------------------------------
 // Set up Markdown
 const marked = new Marked(
@@ -33,7 +34,7 @@ const marked = new Marked(
       const language = hljs.getLanguage(lang) ? lang : "plaintext";
       return hljs.highlight(code, { language }).value;
     },
-  }),
+  })
 );
 
 marked.use({
@@ -64,7 +65,7 @@ render(
         </div>
       `
     : html`<a class="btn btn-primary" href="https://llmfoundry.straive.com/">Sign in to upload files</a>`,
-  $upload,
+  $upload
 );
 
 // --------------------------------------------------------------------
@@ -83,11 +84,13 @@ fetch("config.json")
                 <p class="card-text">${body}</p>
               </div>
             </a>
-          </div>`,
+          </div>`
       ),
-      $demos,
-    ),
+      $demos
+    )
   );
+
+
 
 $demos.addEventListener("click", async (e) => {
   const $demo = e.target.closest(".demo");
@@ -201,7 +204,7 @@ const DB = {
         else if (typeof sampleValue === "boolean") sqlType = "INTEGER"; // SQLite has no boolean
         else if (sampleValue instanceof Date) sqlType = "TEXT"; // Store dates as TEXT
         return [col, sqlType];
-      }),
+      })
     );
     const createTableSQL = `CREATE TABLE IF NOT EXISTS ${tableName} (${cols.map((col) => `[${col}] ${typeMap[col]}`).join(", ")})`;
     db.exec(createTableSQL);
@@ -216,7 +219,7 @@ const DB = {
           cols.map((col) => {
             const value = row[col];
             return value instanceof Date ? value.toISOString() : value;
-          }),
+          })
         )
         .stepReset();
     }
@@ -280,7 +283,7 @@ async function drawTables() {
                           <td>${column.dflt_value ?? "NULL"}</td>
                           <td>${column.pk ? "Yes" : "No"}</td>
                         </tr>
-                      `,
+                      `
                     )}
                   </tbody>
                 </table>
@@ -288,7 +291,7 @@ async function drawTables() {
             </div>
           </div>
         </div>
-      `,
+      `
       )}
     </div>
   `;
@@ -323,7 +326,7 @@ async function drawTables() {
         </div>`,
         query,
       ],
-      $tablesContainer,
+      $tablesContainer
     );
     $query.focus();
   });
@@ -370,10 +373,8 @@ Wrap columns with spaces inside [].`,
 
   // Render the data using the utility function
   if (data.length > 0) {
-    latestQueryResult=data;
-    const tableHtml = renderTable(data.slice(0,100));
+    const tableHtml = renderTable(data);
     render(tableHtml, $result);
-    $tablesContainer.querySelector("#download-button").classList.remove("d-none");
   } else {
     render(html`<p>No results found.</p>`, $result);
   }
@@ -430,29 +431,24 @@ function renderTable(data) {
             <tr>
               ${columns.map((col) => html`<td>${row[col]}</td>`)}
             </tr>
-          `,
+          `
         )}
       </tbody>
     </table>
   `;
 }
 
-$tablesContainer.addEventListener("click", (e) => {
-  if (e.target.id === "download-button" && latestQueryResult.length > 0) {
-    downloadCSV(generateCSV(latestQueryResult), "query_result.csv");
+$result.addEventListener("click", (e) => {
+  const $downloadButton = e.target.closest("#download-button");
+  if ($downloadButton && latestQueryResult.length > 0) {
+    download(dsvFormat(",").format(latestQueryResult), "datachat.csv", "text/csv");
   }
 });
 
 // --------------------------------------------------------------------
-function generateCSV(result) {
-  const headers = Object.keys(result[0] || {}).join(",") + "\n";
-  const rows = result.map((row) => Object.values(row).join(",")).join("\n");
-  return headers + rows;
-}
-
 // Function to download CSV file
-function downloadCSV(content, filename) {
-  const blob = new Blob([content], { type: "text/csv" });
+function download(content, filename, type) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
