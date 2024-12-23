@@ -101,20 +101,20 @@ fetch("config.json")
       $demos
     );
   });
-
 $demos.addEventListener("click", async (e) => {
   const $demo = e.target.closest(".demo");
   if ($demo) {
     e.preventDefault();
     const file = $demo.getAttribute("href");
     render(html`<div class="text-center my-3">${loading}</div>`, $tablesContainer);
+    console.log("Context set before form render:", DB.context);
     await DB.upload(new File([await fetch(file).then((r) => r.blob())], file.split("/").pop()));
     const questions = JSON.parse($demo.dataset.questions);
     if (questions.length) {
       DB.questionInfo.schema = JSON.stringify(DB.schema());
       DB.questionInfo.questions = questions;
     }
-    DB.context = JSON.parse($demo.dataset.context);
+    console.log("Context after demo load:", DB.context);
     drawTables();
   }
 });
@@ -309,11 +309,9 @@ async function drawTables() {
   `;
 
   const query = () => html`
+  <div class = "d-flex align-items-center justify-content-center">
+  <button id="addContextButton" class="btn btn-info mx-auto" type="button">Add Context</button></div>
     <form class="mt-4 narrative mx-auto">
-      <div class="mb-3">
-        <label for="context" class="form-label fw-bold">Provide context about your dataset:</label>
-        <textarea class="form-control" name="context" id="context" rows="3">${DB.context}</textarea>
-      </div>
       <div class="mb-3">
         <label for="query" class="form-label fw-bold">Ask a question about your data:</label>
         <textarea class="form-control" name="query" id="query" rows="3"></textarea>
@@ -349,7 +347,6 @@ async function drawTables() {
 
 // --------------------------------------------------------------------
 // Handle chat
-
 $tablesContainer.addEventListener("click", async (e) => {
   const $question = e.target.closest(".question");
   if ($question) {
@@ -358,9 +355,46 @@ $tablesContainer.addEventListener("click", async (e) => {
     $tablesContainer.querySelector('form button[type="submit"]').click();
   }
 });
+document.addEventListener("DOMContentLoaded", () => {
+  const addContextModal = document.getElementById("addContextModal");
+  const saveContextButton = document.getElementById("saveContext");
+  const contextInput = document.getElementById("contextInput");
+  const closeModalButton = document.querySelector(".close");
+
+  // Bind click event directly if button exists in DOM
+  document.getElementById("addContextButton").addEventListener("click", () => {
+    addContextModal.style.display = "block";
+  });
+
+  // Close modal on close button click
+  closeModalButton.addEventListener("click", () => {
+    addContextModal.style.display = "none";
+  });
+
+  // Save context and close modal
+  saveContextButton.addEventListener("click", () => {
+    const context = contextInput.value.trim();
+    if (context) {
+      // Replace `DB` with your actual storage mechanism
+      const DB = {}; // Example: replace with actual implementation
+      DB.context = context;
+      console.log("Context saved:", DB.context);
+      addContextModal.style.display = "none";
+    } else {
+      alert("Please enter some context.");
+    }
+  });
+  // Close modal when clicking outside the modal content
+  document.addEventListener("click", (event) => {
+    if (event.target === addContextModal) {
+      addContextModal.style.display = "none";
+    }
+  });
+});
 
 $tablesContainer.addEventListener("submit", async (e) => {
   e.preventDefault();
+  console.log("Context before sending to query:", DB.context);
   const formData = new FormData(e.target);
   const query = formData.get("query");
   render(html`<div class="text-center my-3">${loading}</div>`, $sql);
@@ -543,7 +577,6 @@ IMPORTANT: ${$result.querySelector("#chart-input").value}
     }
   }
 });
-
 // --------------------------------------------------------------------
 // Function to download CSV file
 function download(content, filename, type) {
