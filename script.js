@@ -31,6 +31,10 @@ const loading = html`<div class="spinner-border" role="status">
 let latestQueryResult = [];
 let latestChart;
 
+const saveContextButton = document.getElementById("saveContext");
+const contextInput = document.getElementById("contextInput");
+const closeModalButton = document.querySelector(".close");
+const valueFromModalBox = {};
 // --------------------------------------------------------------------
 // Set up Markdown
 const marked = new Marked(
@@ -347,54 +351,47 @@ async function drawTables() {
 
 // --------------------------------------------------------------------
 // Handle chat
-$tablesContainer.addEventListener("click", async (e) => {
+$tablesContainer.addEventListener("click", (e) => {
   const $question = e.target.closest(".question");
+  const $addContextButton = e.target.closest("#addContextButton");
+
+  if($addContextButton){
+      addContextModal.style.display = "block";
+  }
+
   if ($question) {
     e.preventDefault();
     $tablesContainer.querySelector("#query").value = $question.textContent;
     $tablesContainer.querySelector('form button[type="submit"]').click();
   }
 });
-document.addEventListener("DOMContentLoaded", () => {
-  const addContextModal = document.getElementById("addContextModal");
-  const saveContextButton = document.getElementById("saveContext");
-  const contextInput = document.getElementById("contextInput");
-  const closeModalButton = document.querySelector(".close");
 
-  // Bind click event directly if button exists in DOM
-  document.getElementById("addContextButton").addEventListener("click", () => {
-    addContextModal.style.display = "block";
-  });
-
-  // Close modal on close button click
-  closeModalButton.addEventListener("click", () => {
+// Example: replace with actual implementation
+saveContextButton.addEventListener("click", () => {
+  const context = contextInput.value.trim();
+  if (context) {
+    console.log("Context:", context);
+    valueFromModalBox.context = context;
+    console.log("Context saved:", valueFromModalBox.context);
     addContextModal.style.display = "none";
-  });
+  } else {
+    alert("Please enter some context.");
+  }
+});
 
-  // Save context and close modal
-  saveContextButton.addEventListener("click", () => {
-    const context = contextInput.value.trim();
-    if (context) {
-      // Replace `DB` with your actual storage mechanism
-      const DB = {}; // Example: replace with actual implementation
-      DB.context = context;
-      console.log("Context saved:", DB.context);
-      addContextModal.style.display = "none";
-    } else {
-      alert("Please enter some context.");
-    }
-  });
-  // Close modal when clicking outside the modal content
-  document.addEventListener("click", (event) => {
-    if (event.target === addContextModal) {
-      addContextModal.style.display = "none";
-    }
-  });
+closeModalButton.addEventListener("click", () => {
+  addContextModal.style.display = "none";
+});
+
+document.addEventListener("click", (event) => {
+  if (event.target === addContextModal) {
+    addContextModal.style.display = "none";
+  }
 });
 
 $tablesContainer.addEventListener("submit", async (e) => {
   e.preventDefault();
-  console.log("Context before sending to query:", DB.context);
+  console.log("Context before sending to query:", valueFromModalBox.context);
   const formData = new FormData(e.target);
   const query = formData.get("query");
   render(html`<div class="text-center my-3">${loading}</div>`, $sql);
@@ -402,7 +399,7 @@ $tablesContainer.addEventListener("submit", async (e) => {
   const result = await llm({
     system: `You are an expert SQLite query writer. The user has a SQLite dataset.
 
-${DB.context}
+${valueFromModalBox.context}
 
 This is their SQLite schema:
 
