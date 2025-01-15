@@ -44,7 +44,7 @@ const marked = new Marked(
       const language = hljs.getLanguage(lang) ? lang : "plaintext";
       return hljs.highlight(code, { language }).value;
     },
-  })
+  }),
 );
 
 marked.use({
@@ -75,7 +75,7 @@ render(
         </div>
       `
     : html`<a class="btn btn-primary" href="https://llmfoundry.straive.com/">Sign in to upload files</a>`,
-  $upload
+  $upload,
 );
 
 // --------------------------------------------------------------------
@@ -100,9 +100,9 @@ fetch("config.json")
                 <p class="card-text">${body}</p>
               </div>
             </a>
-          </div>`
+          </div>`,
       ),
-      $demos
+      $demos,
     );
   });
 $demos.addEventListener("click", async (e) => {
@@ -127,6 +127,8 @@ $demos.addEventListener("click", async (e) => {
 // Manage database tables
 const db = new sqlite3.oo1.DB(defaultDB, "c");
 const DB = {
+  context: "",
+
   schema: function () {
     let tables = [];
     db.exec("SELECT name, sql FROM sqlite_master WHERE type='table'", { rowMode: "object" }).forEach((table) => {
@@ -220,7 +222,7 @@ const DB = {
         else if (typeof sampleValue === "boolean") sqlType = "INTEGER"; // SQLite has no boolean
         else if (sampleValue instanceof Date) sqlType = "TEXT"; // Store dates as TEXT
         return [col, sqlType];
-      })
+      }),
     );
     const createTableSQL = `CREATE TABLE IF NOT EXISTS ${tableName} (${cols.map((col) => `[${col}] ${typeMap[col]}`).join(", ")})`;
     db.exec(createTableSQL);
@@ -235,7 +237,7 @@ const DB = {
           cols.map((col) => {
             const value = row[col];
             return value instanceof Date ? value.toISOString() : value;
-          })
+          }),
         )
         .stepReset();
     }
@@ -244,6 +246,11 @@ const DB = {
     notify("success", "Imported", `Imported table: ${tableName}`);
   },
 };
+
+$tablesContainer.addEventListener("input", (e) => {
+  const $context = e.target.closest("#context");
+  if ($context) DB.context = $context.value;
+});
 
 $upload.addEventListener("change", async (e) => {
   const uploadPromises = Array.from(e.target.files).map((file) => DB.upload(file));
@@ -299,7 +306,7 @@ async function drawTables() {
                           <td>${column.dflt_value ?? "NULL"}</td>
                           <td>${column.pk ? "Yes" : "No"}</td>
                         </tr>
-                      `
+                      `,
                     )}
                   </tbody>
                 </table>
@@ -307,7 +314,7 @@ async function drawTables() {
             </div>
           </div>
         </div>
-      `
+      `,
       )}
     </div>
   `;
@@ -343,7 +350,7 @@ async function drawTables() {
         </div>`,
         query(),
       ],
-      $tablesContainer
+      $tablesContainer,
     );
     $query.focus();
   });
@@ -411,7 +418,8 @@ Answer the user's question following these steps:
 
 1. Guess their objective in asking this.
 2. Describe the steps to achieve this objective in SQL.
-3. Write SQL to answer the question. Use SQLite sytax.
+3. Build the logic for the SQL query by identifying the necessary tables and relationships. Select the appropriate columns based on the user's question and the dataset.
+4. Write SQL to answer the question. Use SQLite syntax.
 
 Replace generic filter values (e.g. "a location", "specific region", etc.) by querying a random value from data.
 Always use [Table].[Column].
@@ -516,7 +524,7 @@ function renderTable(data) {
             <tr>
               ${columns.map((col) => html`<td>${row[col]}</td>`)}
             </tr>
-          `
+          `,
         )}
       </tbody>
     </table>
